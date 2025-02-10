@@ -2,6 +2,10 @@
 import { ThemeProvider, createTheme } from '@mui/material';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
+import Pipeline from './pages/Pipeline';
+import ImportLeads from './pages/ImportLeads';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
 
 const theme = createTheme({
   palette: {
@@ -43,6 +47,10 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/pipeline" element={<Pipeline />} />
+          <Route path="/import" element={<Pipeline />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
