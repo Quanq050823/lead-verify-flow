@@ -1,14 +1,34 @@
 
 import { useState } from 'react';
-import { Box, Grid, Paper, Typography, Chip, IconButton, Menu, MenuItem, Button, Stack } from '@mui/material';
+import { Box, Paper, Typography, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import Layout from '../components/layout/Layout';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
-  MoreVert as MoreVertIcon,
   FileDownload as FileDownloadIcon,
   Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 
-const leadData = [
+type Lead = {
+  id: number;
+  name: string;
+  source: string;
+  status: string;
+  phone: string;
+  attempts: number;
+  lastAttempt: string | null;
+  email: string;
+  createdAt: string;
+};
+
+type Column = {
+  id: string;
+  title: string;
+  items: Lead[];
+};
+
+const initialLeads = [
   { 
     id: 1, 
     name: 'John Doe', 
@@ -44,23 +64,116 @@ const leadData = [
   },
 ];
 
-const Pipeline = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedLead, setSelectedLead] = useState<number | null>(null);
+const initialColumns: { [key: string]: Column } = {
+  'col-1': {
+    id: 'col-1',
+    title: 'Raw',
+    items: initialLeads.filter(lead => lead.status === 'Raw'),
+  },
+  'col-2': {
+    id: 'col-2',
+    title: 'Verifying',
+    items: initialLeads.filter(lead => lead.status === 'Verifying'),
+  },
+  'col-3': {
+    id: 'col-3',
+    title: 'Scheduled',
+    items: initialLeads.filter(lead => lead.status === 'Scheduled'),
+  },
+};
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, leadId: number) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedLead(leadId);
+const Pipeline = () => {
+  const [columns, setColumns] = useState(initialColumns);
+  const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
+  const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+    
+    if (source.droppableId === destination.droppableId) {
+      const column = columns[source.droppableId];
+      const copiedItems = [...column.items];
+      const [removed] = copiedItems.splice(source.index, 1);
+      copiedItems.splice(destination.index, 0, removed);
+      
+      setColumns({
+        ...columns,
+        [source.droppableId]: {
+          ...column,
+          items: copiedItems,
+        },
+      });
+    } else {
+      const sourceColumn = columns[source.droppableId];
+      const destColumn = columns[destination.droppableId];
+      const sourceItems = [...sourceColumn.items];
+      const destItems = [...destColumn.items];
+      const [removed] = sourceItems.splice(source.index, 1);
+      destItems.splice(destination.index, 0, removed);
+      
+      setColumns({
+        ...columns,
+        [source.droppableId]: {
+          ...sourceColumn,
+          items: sourceItems,
+        },
+        [destination.droppableId]: {
+          ...destColumn,
+          items: destItems,
+        },
+      });
+    }
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedLead(null);
+  const handleAddColumn = () => {
+    if (!newColumnTitle.trim()) return;
+    
+    const newColumnId = `col-${Object.keys(columns).length + 1}`;
+    setColumns({
+      ...columns,
+      [newColumnId]: {
+        id: newColumnId,
+        title: newColumnTitle,
+        items: [],
+      },
+    });
+    setNewColumnTitle('');
+    setIsColumnDialogOpen(false);
+  };
+
+  const handleEditColumn = (columnId: string) => {
+    setEditingColumn(columnId);
+    setNewColumnTitle(columns[columnId].title);
+    setIsColumnDialogOpen(true);
+  };
+
+  const handleUpdateColumn = () => {
+    if (!editingColumn || !newColumnTitle.trim()) return;
+    
+    setColumns({
+      ...columns,
+      [editingColumn]: {
+        ...columns[editingColumn],
+        title: newColumnTitle,
+      },
+    });
+    setNewColumnTitle('');
+    setEditingColumn(null);
+    setIsColumnDialogOpen(false);
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    const newColumns = { ...columns };
+    delete newColumns[columnId];
+    setColumns(newColumns);
   };
 
   return (
     <Layout>
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2 }}>
+      <Box sx={{ height: 'calc(100vh - 100px)', p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             Lead Pipeline
@@ -76,88 +189,153 @@ const Pipeline = () => {
             <Button 
               variant="contained" 
               startIcon={<AddIcon />}
-              onClick={() => console.log('Add Lead')}
+              onClick={() => setIsColumnDialogOpen(true)}
             >
-              Add Lead
+              Add Column
             </Button>
           </Stack>
         </Box>
-        
-        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <Box sx={{ p: 3 }}>
-            {leadData.map((lead) => (
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              height: 'calc(100% - 80px)',
+              overflowX: 'auto',
+              pb: 2,
+            }}
+          >
+            {Object.entries(columns).map(([columnId, column]) => (
               <Paper
-                key={lead.id}
+                key={columnId}
                 sx={{
-                  p: 2,
-                  mb: 2,
+                  minWidth: 300,
+                  backgroundColor: 'background.default',
+                  height: '100%',
                   display: 'flex',
-                  flexDirection: { xs: 'column', md: 'row' },
-                  alignItems: { xs: 'flex-start', md: 'center' },
-                  justifyContent: 'space-between',
-                  gap: 2
+                  flexDirection: 'column',
                 }}
               >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                      {lead.name}
-                    </Typography>
-                    <Chip
-                      label={lead.source}
+                <Box
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Typography variant="h6">{column.title}</Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Button
                       size="small"
-                      sx={{ backgroundColor: 'primary.light' }}
-                    />
-                    <Chip
-                      label={lead.status}
+                      onClick={() => handleEditColumn(columnId)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </Button>
+                    <Button
                       size="small"
-                      color={
-                        lead.status === 'Scheduled'
-                          ? 'success'
-                          : lead.status === 'Verifying'
-                          ? 'warning'
-                          : 'default'
-                      }
-                    />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2, color: 'text.secondary', flexWrap: 'wrap' }}>
-                    <Typography variant="body2">{lead.phone}</Typography>
-                    <Typography variant="body2">•</Typography>
-                    <Typography variant="body2">{lead.email}</Typography>
-                  </Box>
+                      color="error"
+                      onClick={() => handleDeleteColumn(columnId)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </Button>
+                  </Stack>
                 </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Attempts: {lead.attempts}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Created: {lead.createdAt}
-                    </Typography>
-                  </Box>
-                  <IconButton 
-                    size="small"
-                    onClick={(e) => handleMenuOpen(e, lead.id)}
-                  >
-                    <MoreVertIcon />
-                  </IconButton>
-                </Box>
+
+                <Droppable droppableId={columnId}>
+                  {(provided) => (
+                    <Box
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      sx={{
+                        p: 1,
+                        flexGrow: 1,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {column.items.map((lead, index) => (
+                        <Draggable
+                          key={lead.id}
+                          draggableId={lead.id.toString()}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <Paper
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              sx={{
+                                p: 2,
+                                mb: 1,
+                                backgroundColor: 'background.paper',
+                              }}
+                            >
+                              <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                                {lead.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {lead.email}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Source: {lead.source}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Attempts: {lead.attempts}
+                              </Typography>
+                            </Paper>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </Box>
+                  )}
+                </Droppable>
               </Paper>
             ))}
           </Box>
-        </Paper>
+        </DragDropContext>
 
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
+        <Dialog 
+          open={isColumnDialogOpen} 
+          onClose={() => {
+            setIsColumnDialogOpen(false);
+            setNewColumnTitle('');
+            setEditingColumn(null);
+          }}
         >
-          <MenuItem onClick={handleMenuClose}>Update Status</MenuItem>
-          <MenuItem onClick={handleMenuClose}>Edit Details</MenuItem>
-          <MenuItem onClick={handleMenuClose}>View History</MenuItem>
-          <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>Delete</MenuItem>
-        </Menu>
+          <DialogTitle>
+            {editingColumn ? 'Edit Column' : 'Add New Column'}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Column Title"
+              fullWidth
+              variant="outlined"
+              value={newColumnTitle}
+              onChange={(e) => setNewColumnTitle(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => {
+              setIsColumnDialogOpen(false);
+              setNewColumnTitle('');
+              setEditingColumn(null);
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={editingColumn ? handleUpdateColumn : handleAddColumn} 
+              variant="contained"
+            >
+              {editingColumn ? 'Update' : 'Add'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Layout>
   );
