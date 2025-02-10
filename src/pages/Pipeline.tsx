@@ -1,6 +1,19 @@
 
 import { useState } from 'react';
-import { Box, Paper, Typography, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { 
+  Box, 
+  Paper, 
+  Typography, 
+  Button, 
+  Stack, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  TextField,
+  IconButton,
+  MenuItem,
+} from '@mui/material';
 import Layout from '../components/layout/Layout';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
@@ -8,6 +21,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 
 type Lead = {
@@ -87,6 +101,16 @@ const Pipeline = () => {
   const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  
+  // Lead management state
+  const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [leadForm, setLeadForm] = useState<Partial<Lead>>({
+    name: '',
+    email: '',
+    phone: '',
+    source: '',
+  });
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -171,6 +195,91 @@ const Pipeline = () => {
     setColumns(newColumns);
   };
 
+  // Lead management functions
+  const handleAddLead = () => {
+    setEditingLead(null);
+    setLeadForm({
+      name: '',
+      email: '',
+      phone: '',
+      source: '',
+    });
+    setIsLeadDialogOpen(true);
+  };
+
+  const handleEditLead = (lead: Lead) => {
+    setEditingLead(lead);
+    setLeadForm({ ...lead });
+    setIsLeadDialogOpen(true);
+  };
+
+  const handleDeleteLead = (columnId: string, leadId: number) => {
+    const column = columns[columnId];
+    const updatedItems = column.items.filter(item => item.id !== leadId);
+    
+    setColumns({
+      ...columns,
+      [columnId]: {
+        ...column,
+        items: updatedItems,
+      },
+    });
+  };
+
+  const handleSaveLead = () => {
+    if (!leadForm.name || !leadForm.email || !leadForm.phone || !leadForm.source) return;
+
+    const firstColumnId = Object.keys(columns)[0];
+    const newLead: Lead = {
+      id: editingLead?.id || Math.floor(Math.random() * 10000),
+      name: leadForm.name,
+      email: leadForm.email,
+      phone: leadForm.phone,
+      source: leadForm.source,
+      status: columns[firstColumnId].title,
+      attempts: editingLead?.attempts || 0,
+      lastAttempt: editingLead?.lastAttempt || null,
+      createdAt: editingLead?.createdAt || new Date().toISOString().split('T')[0],
+    };
+
+    if (editingLead) {
+      // Update existing lead
+      Object.keys(columns).forEach(columnId => {
+        const column = columns[columnId];
+        const leadIndex = column.items.findIndex(item => item.id === editingLead.id);
+        if (leadIndex !== -1) {
+          const updatedItems = [...column.items];
+          updatedItems[leadIndex] = newLead;
+          setColumns({
+            ...columns,
+            [columnId]: {
+              ...column,
+              items: updatedItems,
+            },
+          });
+        }
+      });
+    } else {
+      // Add new lead to first column
+      setColumns({
+        ...columns,
+        [firstColumnId]: {
+          ...columns[firstColumnId],
+          items: [...columns[firstColumnId].items, newLead],
+        },
+      });
+    }
+
+    setIsLeadDialogOpen(false);
+    setLeadForm({
+      name: '',
+      email: '',
+      phone: '',
+      source: '',
+    });
+    setEditingLead(null);
+  };
+
   return (
     <Layout>
       <Box sx={{ height: 'calc(100vh - 100px)', p: 2 }}>
@@ -185,6 +294,13 @@ const Pipeline = () => {
               onClick={() => console.log('Export')}
             >
               Export
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<AddIcon />}
+              onClick={handleAddLead}
+            >
+              Add Lead
             </Button>
             <Button 
               variant="contained" 
@@ -229,19 +345,19 @@ const Pipeline = () => {
                 >
                   <Typography variant="h6">{column.title}</Typography>
                   <Stack direction="row" spacing={1}>
-                    <Button
+                    <IconButton
                       size="small"
                       onClick={() => handleEditColumn(columnId)}
                     >
                       <EditIcon fontSize="small" />
-                    </Button>
-                    <Button
+                    </IconButton>
+                    <IconButton
                       size="small"
                       color="error"
                       onClick={() => handleDeleteColumn(columnId)}
                     >
                       <DeleteIcon fontSize="small" />
-                    </Button>
+                    </IconButton>
                   </Stack>
                 </Box>
 
@@ -271,9 +387,25 @@ const Pipeline = () => {
                                 p: 2,
                                 mb: 1,
                                 backgroundColor: 'background.paper',
+                                position: 'relative',
                               }}
                             >
-                              <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                              <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEditLead(lead)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteLead(columnId, lead.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 500, pr: 6 }}>
                                 {lead.name}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -298,6 +430,7 @@ const Pipeline = () => {
           </Box>
         </DragDropContext>
 
+        {/* Column Dialog */}
         <Dialog 
           open={isColumnDialogOpen} 
           onClose={() => {
@@ -333,6 +466,69 @@ const Pipeline = () => {
               variant="contained"
             >
               {editingColumn ? 'Update' : 'Add'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Lead Dialog */}
+        <Dialog 
+          open={isLeadDialogOpen} 
+          onClose={() => {
+            setIsLeadDialogOpen(false);
+            setLeadForm({});
+            setEditingLead(null);
+          }}
+        >
+          <DialogTitle>
+            {editingLead ? 'Edit Lead' : 'Add New Lead'}
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                label="Name"
+                fullWidth
+                value={leadForm.name || ''}
+                onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+              />
+              <TextField
+                label="Email"
+                fullWidth
+                value={leadForm.email || ''}
+                onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+              />
+              <TextField
+                label="Phone"
+                fullWidth
+                value={leadForm.phone || ''}
+                onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
+              />
+              <TextField
+                select
+                label="Source"
+                fullWidth
+                value={leadForm.source || ''}
+                onChange={(e) => setLeadForm({ ...leadForm, source: e.target.value })}
+              >
+                <MenuItem value="Facebook">Facebook</MenuItem>
+                <MenuItem value="LinkedIn">LinkedIn</MenuItem>
+                <MenuItem value="Google">Google</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </TextField>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => {
+              setIsLeadDialogOpen(false);
+              setLeadForm({});
+              setEditingLead(null);
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveLead} 
+              variant="contained"
+            >
+              {editingLead ? 'Update' : 'Add'}
             </Button>
           </DialogActions>
         </Dialog>
