@@ -6,11 +6,13 @@ import {
   IconButton,
   Toolbar,
   Typography,
-  useTheme
+  useTheme,
+  Button,
 } from '@mui/material';
 import { 
   Notifications as NotificationsIcon,
-  Help as HelpIcon 
+  Help as HelpIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 
 const TopBar = () => {
@@ -26,21 +28,60 @@ const TopBar = () => {
         borderColor: 'divider',
       }}
     >
-      <Toolbar>
-        <Box sx={{ flexGrow: 1 }} />
+      <Toolbar sx={{ minHeight: '70px !important' }}>
+        <Box 
+          sx={{ 
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Button
+            startIcon={<SearchIcon />}
+            sx={{ 
+              color: 'text.secondary',
+              bgcolor: 'background.default',
+              '&:hover': {
+                bgcolor: 'background.default',
+              },
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+            }}
+          >
+            Search...
+          </Button>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton size="large" color="default">
+          <IconButton 
+            size="large" 
+            sx={{ 
+              bgcolor: 'background.default',
+              '&:hover': {
+                bgcolor: 'background.default',
+              },
+            }}
+          >
             <NotificationsIcon />
           </IconButton>
-          <IconButton size="large" color="default">
+          <IconButton 
+            size="large" 
+            sx={{ 
+              bgcolor: 'background.default',
+              '&:hover': {
+                bgcolor: 'background.default',
+              },
+            }}
+          >
             <HelpIcon />
           </IconButton>
           <Avatar 
             sx={{ 
-              width: 32, 
-              height: 32,
+              width: 40, 
+              height: 40,
               bgcolor: 'primary.main',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             U

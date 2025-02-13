@@ -9,18 +9,18 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import { 
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
-  ImportExport as ImportExportIcon
+  ImportExport as ImportExportIcon,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 
-const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH = 280;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -50,30 +50,39 @@ const Sidebar = () => {
         },
       }}
     >
-      <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+      <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
           Lead Verify AI
         </Typography>
       </Box>
-      <List sx={{ mt: 1 }}>
+      <List sx={{ px: 2, py: 3 }}>
         {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
+          <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
             <ListItemButton
               component={Link}
               to={item.path}
               selected={location.pathname === item.path}
               sx={{
+                borderRadius: 2,
                 '&.Mui-selected': {
-                  bgcolor: 'primary.light',
+                  bgcolor: 'primary.main',
                   '&:hover': {
-                    bgcolor: 'primary.light',
+                    bgcolor: 'primary.dark',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                  '& .MuiListItemText-primary': {
+                    color: 'white',
+                    fontWeight: 500,
                   },
                 },
               }}
             >
               <ListItemIcon 
                 sx={{ 
-                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary'
+                  color: location.pathname === item.path ? 'white' : 'text.secondary',
+                  minWidth: 40,
                 }}
               >
                 {item.icon}
@@ -81,7 +90,7 @@ const Sidebar = () => {
               <ListItemText 
                 primary={item.text}
                 primaryTypographyProps={{
-                  fontWeight: location.pathname === item.path ? 600 : 400,
+                  fontWeight: location.pathname === item.path ? 500 : 400,
                 }}
               />
             </ListItemButton>

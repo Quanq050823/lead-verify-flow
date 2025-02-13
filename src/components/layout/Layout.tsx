@@ -9,7 +9,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <CssBaseline />
       <Sidebar />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -18,7 +18,7 @@ const Layout = ({ children }: LayoutProps) => {
           component="main"
           sx={{
             flex: 1,
-            p: 3,
+            p: 4,
             bgcolor: 'background.default',
             overflow: 'auto'
           }}
