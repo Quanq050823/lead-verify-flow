@@ -10,7 +10,7 @@ import NotFound from './pages/NotFound';
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#7928CA',
       light: '#9753E1',
@@ -22,14 +22,14 @@ const theme = createTheme({
       dark: '#1789AB',
     },
     background: {
-      default: '#111827',
-      paper: '#1F2937',
+      default: '#F8F9FA',
+      paper: '#FFFFFF',
     },
     text: {
-      primary: '#F9FAFB',
-      secondary: '#D1D5DB',
+      primary: '#111827',
+      secondary: '#6B7280',
     },
-    divider: 'rgba(255, 255, 255, 0.12)',
+    divider: 'rgba(0, 0, 0, 0.12)',
   },
   typography: {
     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
@@ -73,7 +73,7 @@ const theme = createTheme({
         root: {
           backgroundImage: 'none',
           borderRadius: 12,
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
         },
       },
     },
@@ -81,7 +81,7 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           backgroundImage: 'none',
-          borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRight: '1px solid rgba(0, 0, 0, 0.12)',
         },
       },
     },
